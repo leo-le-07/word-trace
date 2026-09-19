@@ -1,7 +1,9 @@
 """Word Trace CLI: turn images in input/ into one A4 tracing-worksheet PDF."""
 
+import argparse
 import re
 import shutil
+import subprocess
 import tomllib
 from datetime import datetime
 from pathlib import Path
@@ -92,3 +94,30 @@ def run(home: Path) -> None:
     for path in done:
         shutil.move(str(path), dest / path.name)
     print(f"{len(done)} page(s) -> {pdf_path}")
+
+
+SAMPLES = Path(__file__).resolve().parents[2] / "samples"
+
+
+def preview() -> None:
+    """Render the committed samples to samples/preview.pdf and open it."""
+    pdf_path = SAMPLES / "preview.pdf"
+    done = render_pdf(images_in(SAMPLES), pdf_path)
+    if not done:
+        print(f"No sample images in {SAMPLES}")
+        return
+    print(f"{len(done)} page(s) -> {pdf_path}")
+    subprocess.run(["open", str(pdf_path)], check=False)
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description="Make letter-tracing worksheets.")
+    parser.add_argument(
+        "--preview",
+        action="store_true",
+        help="render samples/ to samples/preview.pdf and open it",
+    )
+    if parser.parse_args().preview:
+        preview()
+    else:
+        run(load_home())

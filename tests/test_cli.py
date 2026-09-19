@@ -1,3 +1,4 @@
+import sys
 from pathlib import Path
 
 import pytest
@@ -125,3 +126,51 @@ def test_run_leaves_failed_image_in_input(tmp_path):
 
     assert [p.name for p in (tmp_path / "input").iterdir()] == ["broken.png"]
     assert len(list((tmp_path / "output").glob("*.pdf"))) == 1
+
+
+from wordtrace import cli
+
+
+def test_preview_writes_and_opens_one_pdf(tmp_path, monkeypatch):
+    samples = tmp_path / "samples"
+    make_image(samples / "cat.png")
+    make_image(samples / "dog.png")
+    monkeypatch.setattr(cli, "SAMPLES", samples)
+    opened = []
+    monkeypatch.setattr(cli.subprocess, "run", lambda cmd, **kw: opened.append(cmd))
+
+    cli.preview()
+    cli.preview()
+
+    pdfs = list(samples.glob("*.pdf"))
+    assert [p.name for p in pdfs] == ["preview.pdf"]
+    assert sorted(p.name for p in samples.glob("*.png")) == ["cat.png", "dog.png"]
+    assert len(opened) == 2
+
+
+def test_preview_with_no_samples_says_so(tmp_path, monkeypatch, capsys):
+    samples = tmp_path / "samples"
+    samples.mkdir()
+    monkeypatch.setattr(cli, "SAMPLES", samples)
+    monkeypatch.setattr(cli.subprocess, "run", lambda cmd, **kw: None)
+    cli.preview()
+    assert "No sample images" in capsys.readouterr().out
+    assert not list(samples.glob("*.pdf"))
+
+
+def test_main_preview_flag_does_not_touch_home(monkeypatch):
+    calls = []
+    monkeypatch.setattr(cli, "preview", lambda: calls.append("preview"))
+    monkeypatch.setattr(cli, "run", lambda home: calls.append("run"))
+    monkeypatch.setattr(sys, "argv", ["wordtrace", "--preview"])
+    cli.main()
+    assert calls == ["preview"]
+
+
+def test_main_without_flag_runs(monkeypatch):
+    calls = []
+    monkeypatch.setattr(cli, "preview", lambda: calls.append("preview"))
+    monkeypatch.setattr(cli, "run", lambda home: calls.append(("run", home)))
+    monkeypatch.setattr(sys, "argv", ["wordtrace"])
+    cli.main()
+    assert calls == [("run", cli.load_home())]
