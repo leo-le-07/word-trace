@@ -1,6 +1,8 @@
 from pathlib import Path
 
-from wordtrace.cli import DEFAULT_HOME, load_home
+import pytest
+
+from wordtrace.cli import DEFAULT_HOME, load_home, word_and_letter
 
 
 def test_missing_config_uses_default(tmp_path):
@@ -30,3 +32,21 @@ def test_malformed_config_warns_and_uses_default(tmp_path, capsys):
     cfg.write_text("home = [unclosed\n")
     assert load_home(cfg) == DEFAULT_HOME
     assert "wordtrace.toml" in capsys.readouterr().out
+
+
+@pytest.mark.parametrize(
+    "stem,title,letter",
+    [
+        ("dump truck", "Dump Truck", "d"),
+        ("CAT", "Cat", "C"),
+        ("dad's car", "Dad's Car", "d"),
+        ("T-Rex", "T-Rex", "T"),
+        ("3 bears", "3 Bears", "b"),
+    ],
+)
+def test_word_and_letter(stem, title, letter):
+    assert word_and_letter(stem) == (title, letter)
+
+
+def test_word_without_letters_returns_none():
+    assert word_and_letter("123") == ("123", None)
