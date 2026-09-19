@@ -1,5 +1,7 @@
 # Word Trace
 
+![Tiger tracing worksheet example](docs/images/example-tiger.png)
+
 Letter-tracing worksheets for A4. Drop images named after their word into
 `~/Documents/WordTrace/input/`, then:
 
