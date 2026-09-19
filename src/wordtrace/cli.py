@@ -14,7 +14,7 @@ from reportlab.pdfgen import canvas
 from wordtrace.layout import render_page
 
 DEFAULT_HOME = Path.home() / "Documents" / "WordTrace"
-CONFIG = Path.home() / ".wordtrace.toml"
+CONFIG = Path(__file__).resolve().parents[2] / "wordtrace.toml"
 
 
 def load_home(config: Path = CONFIG) -> Path:
